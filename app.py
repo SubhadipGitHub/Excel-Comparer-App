@@ -17,6 +17,9 @@ class DataComparerApp:
         self.df1 = None
         self.df2 = None
 
+        self.selected_columns1 = []
+        self.selected_columns2 = []
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -129,6 +132,7 @@ class DataComparerApp:
             self.df1 = pd.read_excel(file_path) if file_path.endswith('.xlsx') else pd.read_csv(file_path)
             self.update_file_info()
             self.update_column_listbox(self.df1, self.column1_listbox)
+            self.upload_button1.config(state=tk.DISABLED)  # Disable the upload button after the file is uploaded
 
     def upload_file2(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx"), ("CSV files", "*.csv")])
@@ -137,6 +141,7 @@ class DataComparerApp:
             self.df2 = pd.read_excel(file_path) if file_path.endswith('.xlsx') else pd.read_csv(file_path)
             self.update_file_info()
             self.update_column_listbox(self.df2, self.column2_listbox)
+            self.upload_button2.config(state=tk.DISABLED)  # Disable the upload button after the file is uploaded
 
     def update_file_info(self):
         if self.df1 is not None:
@@ -167,8 +172,13 @@ class DataComparerApp:
             return
 
         # Check if columns are selected
-        if not hasattr(self, 'selected_columns1') or not hasattr(self, 'selected_columns2'):
+        if not hasattr(self, 'selected_columns1') or not hasattr(self, 'selected_columns2') or (not self.selected_columns1) or (not self.selected_columns2):
             messagebox.showwarning("Warning", "Please select columns from both files.")
+            return
+        
+        # Check if same number of columns are there in both files
+        if len(self.df1.columns) != len(self.df2.columns):
+            messagebox.showwarning("Warning", f"Files being compared have mismatch in number of columns. File 1 has {len(self.df1.columns)} columns and File 2 has {len(self.df2.columns)} columns")
             return
 
         # Ensure that the number of selected columns is equal
@@ -191,8 +201,11 @@ class DataComparerApp:
         mismatches = pd.DataFrame()
         for column1 in self.selected_columns1:
             for column2 in self.selected_columns2:
+                # Merge dataframes to find mismatches
                 temp_mismatches = self.df1[[column1]].merge(self.df2[[column2]], left_on=column1, right_on=column2, how='outer', indicator=True)
                 temp_mismatches = temp_mismatches[temp_mismatches['_merge'] != 'both']
+                
+                # Append additional columns to the mismatch dataframe
                 if not temp_mismatches.empty:
                     temp_mismatches['File1_Column'] = column1
                     temp_mismatches['File2_Column'] = column2
@@ -213,12 +226,15 @@ class DataComparerApp:
         self.df1 = None
         self.df2 = None
 
+        # Update file information labels
         self.file1_info.config(text="No file uploaded")
         self.file2_info.config(text="No file uploaded")
 
+        # Clear column listboxes
         self.column1_listbox.delete(0, tk.END)
         self.column2_listbox.delete(0, tk.END)
 
+        # Clear selected columns display
         self.selected_columns1_display.config(text="")
         self.selected_columns2_display.config(text="")
 
@@ -226,9 +242,16 @@ class DataComparerApp:
         self.upload_button1.config(text="Upload File 1")
         self.upload_button2.config(text="Upload File 2")
 
+        # Reset file upload buttons
+        self.upload_button1.config(text="Upload File 1", state=tk.NORMAL)
+        self.upload_button2.config(text="Upload File 2", state=tk.NORMAL)
+
         # Reset selected columns
         self.selected_columns1 = []
         self.selected_columns2 = []
+
+        # Optionally reset any additional UI components related to file comparison results
+
 
 if __name__ == "__main__":
     root = tk.Tk()
