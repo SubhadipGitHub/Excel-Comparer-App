@@ -53,10 +53,10 @@ class DataComparerApp:
         file_frame.pack(fill=tk.BOTH, expand=True, padx=20)
 
         # Grid Layout
-        file_frame.grid_columnconfigure(0, weight=1)
+        file_frame.grid_columnconfigure(0, weight=2)
         file_frame.grid_columnconfigure(1, weight=1)
+        file_frame.grid_columnconfigure(2, weight=2)  # Column for buttons
         file_frame.grid_rowconfigure(0, weight=1)
-        file_frame.grid_rowconfigure(1, weight=1)
 
         # File 1 Section
         file1_frame = ttk.Frame(file_frame, padding="10", style="File1.TFrame")
@@ -82,9 +82,25 @@ class DataComparerApp:
         self.selected_columns1_display = ttk.Label(file1_frame, text="", background="#f8f9fa")
         self.selected_columns1_display.pack(pady=5)
 
+        # Button Section
+        button_frame = ttk.Frame(file_frame, padding="10", style="ButtonFrame.TFrame")
+        button_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
+        # Reset Button with Image
+        self.reset_img = Image.open("reset.png")  # Ensure you have a reset.png file in the working directory
+        self.reset_img = self.reset_img.resize((40, 40), Image.LANCZOS)  # Resize the reset image using Image.LANCZOS
+        self.reset_img = ImageTk.PhotoImage(self.reset_img)
+        self.reset_button = ttk.Button(button_frame, image=self.reset_img, command=self.reset, style='TButton')
+        self.reset_button.pack(pady=10)
+
+        # Compare Button
+        self.compare_button = ttk.Button(button_frame, text="Compare Data", command=self.compare_data)
+        self.compare_button.pack(pady=150)
+        
+
         # File 2 Section
         file2_frame = ttk.Frame(file_frame, padding="10", style="File2.TFrame")
-        file2_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        file2_frame.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
 
         ttk.Label(file2_frame, text="Upload File 2", background="#f8f9fa").pack(pady=5)
         self.upload_button2 = ttk.Button(file2_frame, text="Upload File 2", command=self.upload_file2)
@@ -106,17 +122,6 @@ class DataComparerApp:
         self.selected_columns2_display = ttk.Label(file2_frame, text="", background="#f8f9fa")
         self.selected_columns2_display.pack(pady=5)
 
-        # Compare Button
-        self.compare_button = ttk.Button(self.root, text="Compare Data", command=self.compare_data)
-        self.compare_button.pack(pady=20)        
-
-        # Reset Button with Image
-        self.reset_img = Image.open("reset.png")  # Ensure you have a reset.png file in the working directory
-        self.reset_img = self.reset_img.resize((60, 60), Image.LANCZOS)  # Resize the reset image using Image.LANCZOS
-        self.reset_img = ImageTk.PhotoImage(self.reset_img)
-        self.reset_button = ttk.Button(self.root, image=self.reset_img, command=self.reset, style='TButton')
-        self.reset_button.pack(pady=5)
-
     def upload_file1(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx"), ("CSV files", "*.csv")])
         if file_path:
@@ -136,11 +141,11 @@ class DataComparerApp:
     def update_file_info(self):
         if self.df1 is not None:
             file1_size = self.df1.memory_usage(deep=True).sum() / (1024 * 1024)  # Size in MB
-            self.file1_info.config(text=f"File 1: {self.file1.split('/')[-1]} | Size: {file1_size:.2f} MB | Rows: {len(self.df1)} | Columns: {', '.join(self.df1.columns)}")
+            self.file1_info.config(text=f"File 1: {self.file1.split('/')[-1]} | Size: {file1_size:.2f} MB | Rows: {len(self.df1)} | Columns: {len(self.df1.columns)}")
 
         if self.df2 is not None:
             file2_size = self.df2.memory_usage(deep=True).sum() / (1024 * 1024)  # Size in MB
-            self.file2_info.config(text=f"File 2: {self.file2.split('/')[-1]} | Size: {file2_size:.2f} MB | Rows: {len(self.df2)} | Columns: {', '.join(self.df2.columns)}")
+            self.file2_info.config(text=f"File 2: {self.file2.split('/')[-1]} | Size: {file2_size:.2f} MB | Rows: {len(self.df2)} | Columns: {len(self.df2.columns)}")
 
     def update_column_listbox(self, df, listbox):
         listbox.delete(0, tk.END)
